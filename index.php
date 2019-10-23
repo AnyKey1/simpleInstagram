@@ -27,39 +27,48 @@ function cp1251_utf8( $sInput )
 
 function get_page($url, $filename=null){
 
-    $ch = curl_init();
-    curl_setopt($ch,CURLOPT_URL, $url);
-    curl_setopt($ch,CURLOPT_HEADER, 0);
-    curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
-    curl_setopt($ch,CURLOPT_HEADER,false);
-    curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
-    curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,30);
-    curl_setopt($ch,CURLOPT_FOLLOWLOCATION  ,1);
-    curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,1);
-    curl_setopt($ch,CURLOPT_COOKIEJAR,"cookie.txt");
-    curl_setopt($ch,CURLOPT_COOKIEFILE,"cookie.txt");
-    curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36');
+    $cache_file = md5($url);
+    if ( ( time() - filemtime("cache/{$cache_file}") ) > 5 ) { // cache too old
+        echo "from url";
+        $ch = curl_init();
+        curl_setopt($ch,CURLOPT_URL, $url);
+        curl_setopt($ch,CURLOPT_HEADER, 0);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch,CURLOPT_HEADER,false);
+        curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+        curl_setopt($ch,CURLOPT_CONNECTTIMEOUT,30);
+        curl_setopt($ch,CURLOPT_FOLLOWLOCATION  ,1);
+        curl_setopt($ch,CURLOPT_SSL_VERIFYPEER,1);
+        curl_setopt($ch,CURLOPT_COOKIEJAR,"cookie.txt");
+        curl_setopt($ch,CURLOPT_COOKIEFILE,"cookie.txt");
+        curl_setopt($ch,CURLOPT_USERAGENT,'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36');
 
-    $page = curl_exec($ch);
+        $page = curl_exec($ch);
 
-    if(!curl_errno($ch))
-    {
-       $info = curl_getinfo($ch);
-       //echo "\n Прошло " . $info['total_time'] . " секунд, скачано {$info['size_download']}   адрес " . $info['url'];
-       //var_dump($info);
+        if(!curl_errno($ch))
+        {
+           $info = curl_getinfo($ch);
+           //echo "\n Прошло " . $info['total_time'] . " секунд, скачано {$info['size_download']}   адрес " . $info['url'];
+           //var_dump($info);
+        }
+
+        // завершение сеанса и освобождение ресурсов
+       curl_close($ch);
+
+        if ($filename){
+            $handle = fopen("$filename", "a+");
+            fwrite($handle, "$page");
+            return true;
+        }
+
+        $handle = fopen("cache/{$cache_file}", "w+");
+        fwrite($handle, $page);
+
+    } else {
+        echo "from cache";
+        $page = file_get_contents("cache/{$cache_file}");
     }
-
-    // завершение сеанса и освобождение ресурсов
-   curl_close($ch);
-
-    if ($filename){
-        $handle = fopen("$filename", "a+");
-        fputs($handle, "$page");
-        return true;
-    }
-    	//echo $page;
-   	return $page;
-
+    return $page;
 }
 
 
