@@ -89,16 +89,18 @@ if (preg_match_all($template, $html, $matches, PREG_SET_ORDER)){
         }
         echo json_encode($nodes);
         exit();
-}
-
+    } elseif (@$_GET['type'] == "table"){
 ?>
-<table>
+      <table>
 <?
-    foreach ($nodes as $node){
-        echo "<tr><td><img src=\"{$node->node->thumbnail_src}\"></td>";
-        echo "<td>{$node->node->edge_media_to_caption->edges[0]->node->text}</td>";
-        echo "<td>{$node->node->edge_liked_by->count}</td></tr>";
-    }
+       foreach ($nodes as $node){
+       	   echo "<tr><td><img src=\"{$node->node->thumbnail_src}\"></td>";
+     	   echo "<td>{$node->node->edge_media_to_caption->edges[0]->node->text}</td>";
+           echo "<td>{$node->node->edge_liked_by->count}</td></tr>";
+        }
+    }else{
+	echo "undefined output type. Use type=json or type=table in your request";
+	}
 }
 ?>
 </table>
